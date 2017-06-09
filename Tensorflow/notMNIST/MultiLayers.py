@@ -77,9 +77,9 @@ with graph.as_default():
         return layer4
 
     global_step = tf.Variable(0, trainable = False)
-    learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 10 * total_batches, 0.1, staircase = True)
+    learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 2 * total_batches, 0.94, staircase = True)
 
-    l2_loss = 0.001 * (\
+    l2_loss = 0.0005 * (\
         tf.nn.l2_loss(layer1_weights) +\
         tf.nn.l2_loss(layer1_biases) +\
         tf.nn.l2_loss(layer2_weights) +\
