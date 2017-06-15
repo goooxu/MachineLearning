@@ -243,23 +243,6 @@ class Seq2SeqModel():
             self.encoder_inputs_length: inputs_length_
         }
 
-def random_expressions(batch_size):
-    opchars = ['+', '-', '*']
-
-    def random_expression(argc):
-        args = np.random.randint(10000, size=argc)
-        ops = np.random.randint(3, size=argc-1)
-        input_exp = '{}'.format(args[0])
-        for i in range(argc - 1):
-            input_exp += '{}{}'.format(opchars[ops[i]],args[i + 1])
-        output_exp = str(eval(input_exp))
-
-        return ([ord(c) for c in input_exp], [ord(c) for c in output_exp])
-
-    while True:
-        argcs = np.random.randint(2, 5, batch_size)
-        yield [random_expression(i) for i in argcs]
-
 def print_sample(inputs, targets, predicteds, count):
     for i, (inp, target, pred) in enumerate(zip(inputs, targets, predicteds)):
         print('  sample {}:'.format(i + 1))
@@ -270,8 +253,11 @@ def print_sample(inputs, targets, predicteds, count):
             break
     print()
 
+dataset = np.genfromtxt('expressions.csv', dtype='unicode', delimiter=',')
+print(dataset.shape)
+
 batch_size=128
-batches_in_epoch = 1000
+batches_in_epoch=1000
 
 with tf.Session() as session:
     
@@ -287,6 +273,9 @@ with tf.Session() as session:
 
     while True:
         command = input('Input your command: ')
+        if command == '':
+            continue
+
         action = command[0]
         args = command[1:].strip().split()
 
@@ -301,12 +290,12 @@ with tf.Session() as session:
                 print('Invalid arguments.')
                 continue
 
-            dataset_iter = random_expressions(batch_size)
-
             try:
                 for batch in range(epoch * 1000 + 1):
-                    batch_data = next(dataset_iter)
-                    fd = model.make_train_inputs([seq[0] for seq in batch_data], [seq[1] for seq in batch_data])
+                    batch_data = dataset[np.random.choice(dataset.shape[0], batch_size)]
+                    fd = model.make_train_inputs(
+                        [[ord(c) for c in seq[1]] for seq in batch_data],
+                        [[ord(c) for c in seq[0]] for seq in batch_data])
                     _, l = session.run([model.train_op, model.loss], fd)
 
                     if batch % batches_in_epoch == 0:
